@@ -4,6 +4,7 @@ const authRouter = require("./routers/authRoute")
 const productRouter = require("./routers/productRoute")
 const logOutRouter = require("./routers/logOutRoute")
 const cartRouter = require("./routers/cartRoute")
+const uploadFileRouter = require("./routers/uploadFileRoute")
 const connectDb = require("./dbconnect/mongodb")
 require("dotenv").config()
 const cookieParser = require("cookie-parser")
@@ -28,6 +29,7 @@ app.use("/api", authRouter)
 app.use("/api", logOutRouter)
 app.use("/api", productRouter)
 app.use("/api", cartRouter)
+app.use("/api", uploadFileRouter)
 
 
 const port = process.env.PORT
