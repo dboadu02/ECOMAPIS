@@ -5,9 +5,11 @@ const productRouter = require("./routers/productRoute")
 const logOutRouter = require("./routers/logOutRoute")
 const cartRouter = require("./routers/cartRoute")
 const uploadFileRouter = require("./routers/uploadFileRoute")
+const otpRouter = require("./routers/otpRoute")
 const connectDb = require("./dbconnect/mongodb")
 require("dotenv").config()
 const cookieParser = require("cookie-parser")
+
 
 connectDb()
 const app = express()
@@ -30,6 +32,7 @@ app.use("/api", logOutRouter)
 app.use("/api", productRouter)
 app.use("/api", cartRouter)
 app.use("/api", uploadFileRouter)
+app.use("/api", otpRouter)
 
 
 const port = process.env.PORT

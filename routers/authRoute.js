@@ -1,5 +1,5 @@
 const Router = require("express");
-const { loggingIn } = require("../controllers/authController");
+const { loggingIn, passwordResetRequest, passwordReset } = require("../controllers/authController");
 
 const authRouter = Router();
 
@@ -9,6 +9,8 @@ const authRouter = Router();
 //CRUD
 authRouter
   .post("/user/login", loggingIn)
+  .post('/password/resetRequest', passwordResetRequest)
+  .post('/password/reset', passwordReset)
    
 
 

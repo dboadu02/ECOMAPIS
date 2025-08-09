@@ -1,11 +1,14 @@
-const { Admin } = require("mongodb");
 const User = require("../schemas/userSchema");
+const {sendMail, generateOTP} = require("../utils/sendEmail")
 const bcrypt = require("bcrypt");
-
 
 
 const createUser = async (req, res) => {
   const { username, email, password } = req.body;
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: "Please fill all fields!" });
+  }
 
   try {
     // const returnedemail = await User.findOne({ email: email }); or the next line of code
@@ -13,21 +16,54 @@ const createUser = async (req, res) => {
     if (returnedemail) {
       return res.status(400).json({ message: "User already exists!" });
     }
-    if (!username || !email || !password) {
-      return res.status(400).json({ message: "Please fill all fields!" });
-    }
+
+  
 
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(password, salt);
 
-    if (email == 'boadu360@gmail.com' || email == 'esaaba@gmail.com'){
-      const newUser = new User({ ...req.body, password: hashedPassword, admin: true })
+    if (email == process.env.ADMIN_EMAIL) {
+      const newUser = new User({
+        ...req.body,
+        password: hashedPassword,
+        admin: true,
+      });
       await newUser.save();
-      return
+      return;
     }
-    
-    const newUser = new User({ ...req.body, password: hashedPassword });
+
+    const { otp, otpExpires } = generateOTP();
+
+    const newUser = new User({
+      ...req.body,
+      password: hashedPassword,
+      otp,
+      otpExpires, 
+    });
+
     await newUser.save();
+   
+
+    try {
+      
+      const mailObj = {
+        mailFrom: `Ecomapis ${process.env.EMAIL_USER}`,
+        mailTo: email,
+        subject: "Successfully created an account✨",
+        body: `
+                <h1>Welcome to Ecommapis <strong>${username}</strong> 😍</h1>
+                <p>Here is your OTP <strong>${otp}</strong>, proceed to verify mail</p>
+                
+          `,
+      };
+      const info = await sendMail(mailObj);
+      console.log(info);
+    } catch (err) {
+      console.log(err.message);
+    }
+
+    // Send email after successful registration
+
     res.json({ message: "User created successfully!" });
   } catch (err) {
     console.log(err);
@@ -68,11 +104,11 @@ const getOneUser = async (req, res) => {
 const editUser = async (req, res) => {
   const { id } = req.params;
   const reqId = req.user._id;
-  const { username, email, password } = req.body
+  const { username, email, password } = req.body;
 
-  if(id === reqId){
-      try {
-      const user = await User.findByIdAndUpdate(id, req.body, {new : true});
+  if (id === reqId) {
+    try {
+      const user = await User.findByIdAndUpdate(id, req.body, { new: true });
       if (!user) {
         return res.status(404).json({ message: "User not found!" });
       }
@@ -87,18 +123,22 @@ const editUser = async (req, res) => {
 const editProfile = async (req, res) => {
   const { id } = req.params;
   const reqId = req.user._id;
-  const { country, number, street, bio } = req.body
+  const { country, number, street, bio } = req.body;
 
-  if(id === reqId){
-      try {
-      const user = await User.findByIdAndUpdate(id,{ 
-        $set: {
-          'profile.country': country,
-          'profile.number': number, 
-          'profile.street': street,
-          'profile.bio': bio
-        }
-      }, {new : true});
+  if (id === reqId) {
+    try {
+      const user = await User.findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            "profile.country": country,
+            "profile.number": number,
+            "profile.street": street,
+            "profile.bio": bio,
+          },
+        },
+        { new: true }
+      );
       if (!user) {
         return res.status(404).json({ message: "User not found!" });
       }
@@ -112,19 +152,21 @@ const editProfile = async (req, res) => {
 
 //a delete method to remove a user from the database using path variable
 const deleteUser = async (req, res) => {
-    const { id } = req.params;
-    const {_id, admin} = req.user
+  const { id } = req.params;
+  const { _id, admin } = req.user;
 
-    if (_id === id || admin === true) {
+  if (_id === id || admin === true) {
     try {
-       await User.findByIdAndDelete(id);
-       res.json({ message: "User deleted successfully!" });
+      await User.findByIdAndDelete(id);
+      res.json({ message: "User deleted successfully!" });
     } catch (err) {
       console.log(err.message);
       res.status(500).json({ message: "Server error!" });
     }
   } else {
-    return res.status(401).json({ message: "You are not authorized to delete this user!" });
+    return res
+      .status(401)
+      .json({ message: "You are not authorized to delete this user!" });
   }
 };
 
