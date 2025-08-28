@@ -14,13 +14,6 @@ const cookieParser = require("cookie-parser")
 connectDb()
 const app = express()
 
-/* Types of variables in express.js
-
-1. header variable
-2. body variable
-3. query variable
-4. path variable
- */
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
